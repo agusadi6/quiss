@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade 3 Mega Quiz</title>
+    <style>
+        body { font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px; border: 6px solid #ffcc00; }
+        h1 { color: #e67e22; text-align: center; font-size: 32px; text-shadow: 2px 2px #ffeaa7; }
+        .instruction { text-align: center; color: #7f8c8d; margin-bottom: 20px; }
+        input[type="text"] { padding: 15px; border-radius: 12px; border: 3px solid #ffcc00; width: 85%; font-size: 18px; text-align: center; outline: none; }
+        .question-box { background: #fff9e6; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 8px solid #f1c40f; }
+        .question-text { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
+        .options label { display: block; background: white; margin: 10px 0; padding: 12px; border-radius: 10px; border: 2px solid #ecf0f1; cursor: pointer; transition: 0.2s; }
+        .options label:hover { border-color: #f1c40f; background: #fffdf5; }
+        button { background: #27ae60; color: white; border: none; padding: 18px; border-radius: 50px; cursor: pointer; font-size: 20px; width: 100%; font-weight: bold; box-shadow: 0 5px 0 #1e8449; transition: 0.1s; }
+        button:active { box-shadow: none; transform: translateY(4px); }
+        #result { text-align: center; padding: 20px; }
+        .score-circle { width: 120px; height: 120px; line-height: 120px; border-radius: 50%; background: #f1c40f; color: white; font-size: 40px; display: inline-block; margin: 20px 0; border: 5px solid #d4ac0d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Rainbow Quiz 🌈</h1>
+    
+    <div id="setup">
+        <p class="instruction">Ready to test your brain? Enter your name!</p>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <input type="text" id="studentName" placeholder="Write your name here..." autocomplete="off">
+        </div>
+        <button onclick="startQuiz()">Let's Play! 🎮</button>
+    </div>
+
+    <div id="quiz-area" style="display:none;">
+        <h3 id="display-name" style="text-align:center; color: #2980b9;"></h3>
+        <div id="question-container"></div>
+        <button onclick="calculateScore()">Show My Score! 🏆</button>
+    </div>
+
+    <div id="result" style="display:none;"></div>
+</div>
+
+<script>
+    const bankSoal = [
+        // English
+        { q: "Which word is a noun (person, place, or thing)?", a: ["Run", "Happy", "School"], correct: "School" },
+        { q: "What is the opposite of 'Fast'?", a: ["Quick", "Slow", "High"], correct: "Slow" },
+        { q: "Which is the correct sentence?", a: ["She like apples.", "She likes apples.", "She liking apples."], correct: "She likes apples." },
+        { q: "I have ten ____ (fingers).", a: ["finger", "fingers", "fingeres"], correct: "fingers" },
+        { q: "An ____ a day keeps the doctor away.", a: ["Apple", "Banana", "Orange"], correct: "Apple" },
+        
+        // Math
+        { q: "What is 9 \times 4?", a: ["32", "36", "40"], correct: "36" },
+        { q: "What is 120 + 30?", a: ["150", "160", "140"], correct: "150" },
+        { q: "Which number is even?", a: ["7", "13", "22"], correct: "22" },
+        { q: "What is$50 - 15?", a: ["35", "45", "25"], correct: "35" },
+        { q: "A square has how many equal sides?", a: ["2", "3", "4"], correct: "4" },
+        { q: "What is half of 20?", a: ["5", "10", "15"], correct: "10" },
+        { q: "What is 100 \times 2?", a: ["100", "1", "200"], correct: "200" },
+
+        // Science
+        { q: "Which planet is closest to the Sun?", a: ["Earth", "Mercury", "Venus"], correct: "Mercury" },
+        { q: "What do plants need to grow?", a: ["Soda", "Sunlight", "Pizza"], correct: "Sunlight" },
+        { q: "Which part of the plant is underground?", a: ["Leaves", "Flowers", "Roots"], correct: "Roots" },
+        { q: "Ice is water in which state?", a: ["Solid", "Liquid", "Gas"], correct: "Solid" },
+        { q: "Which animal lays eggs?", a: ["Cat", "Chicken", "Rabbit"], correct: "Chicken" },
+        { q: "The moon shines because it reflects light from the...", a: ["Earth", "Stars", "Sun"], correct: "Sun" },
+
+        // General Knowledge
+        { q: "How many days are in a week?", a: ["5 days", "7 days", "10 days"], correct: "7 days" },
+        { q: "Which month comes after June?", a: ["May", "July", "August"], correct: "July" },
+        { q: "A person who flies a plane is a...", a: ["Doctor", "Pilot", "Chef"], correct: "Pilot" },
+        { q: "What color do you get by mixing Red and Blue?", a: ["Green", "Purple", "Orange"], correct: "Purple" },
+        { q: "How many continents are there in the world?", a: ["5", "7", "10"], correct: "7" },
+        { q: "What is the largest ocean?", a: ["Atlantic", "Indian", "Pacific"], correct: "Pacific" },
+        { q: "Which sense do you use to hear music?", a: ["Sight", "Hearing", "Touch"], correct: "Hearing" }
+    ];
+
+    let selectedQuestions = [];
+
+    function startQuiz() {
+        const name = document.getElementById('studentName').value;
+        if (name.trim() === "") return alert("Please type your name first! 😊");
+
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('quiz-area').style.display = 'block';
+        document.getElementById('display-name').innerText = "Good Luck, " + name + "!";
+
+        // Randomly pick 5 questions from the bank of 25
+        selectedQuestions = bankSoal.sort(() => 0.5 - Math.random()).slice(0, 5);
+        
+        displayQuestions();
+    }
+
+    function displayQuestions() {
+        const container = document.getElementById('question-container');
+        container.innerHTML = "";
+        
+        selectedQuestions.forEach((item, index) => {
+            let optionsHTML = item.a.map(opt => `
+                <label>
+                    <input type="radio" name="q${index}" value="${opt}"> ${opt}
+                </label>
+            `).join('');
+
+            container.innerHTML += `
+                <div class="question-box">
+                    <div class="question-text">${index + 1}. ${item.q}</div>
+                    <div class="options">${optionsHTML}</div>
+                </div>
+            `;
+        });
+    }
+
+    function calculateScore() {
+        let score = 0;
+        let answeredCount = 0;
+
+        selectedQuestions.forEach((item, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            if (selected) {
+                answeredCount++;
+                if (selected.value === item.correct) {
+                    score++;
+                }
+            }
+        });
+
+        if (answeredCount < 5) {
+            alert("Oops! Please answer all questions before finishing! 📝");
+            return;
+        }
+
+        const name = document.getElementById('studentName').value;
+        const finalScore = (score / 5) * 100;
+
+        document.getElementById('quiz-area').style.display = 'none';
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        
+        let feedback = finalScore === 100 ? "PERFECT! You are a superstar! ⭐" : "Well done! Keep practicing! 📖";
+
+        resultDiv.innerHTML = `
+            <h2>${name}'s Result</h2>
+            <div class="score-circle">${finalScore}</div>
+            <p style="font-size: 18px; color: #2c3e50;">${feedback}</p>
+            <p>You got ${score} out of 5 correct.</p>
+            <button onclick="location.reload()">Next Student 🔄</button>
+        `;
+    }
+</script>
+
+</body>
+</html>
